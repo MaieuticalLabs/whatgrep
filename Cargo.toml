@@ -1,0 +1,12 @@
+[package]
+name = "whatgrep"
+version = "0.1.0"
+authors = ["MRoci"]
+license = "MIT"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+structopt = "^0.3.0"
+whatlang = "^0.7.1"
