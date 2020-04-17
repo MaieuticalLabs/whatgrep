@@ -1,0 +1,97 @@
+on:
+  push:
+    tags:
+      - 'v*'
+
+name: Upload Release Asset
+
+jobs:
+  build_linux:
+    name: build linux 
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: install rust stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: Build project
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release
+      - name: Archive Build
+        run: |
+          tar cvzf whatgrep_linux_amd64.tar.gz -C ./target/release whatgrep
+      - name: Upload linux build artifact
+        uses: actions/upload-artifact@v1
+        with:
+          path: ./whatgrep_linux_amd64.tar.gz
+          name: linux
+  build_macos:
+    name: build macos
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: install rust stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: Build project
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release
+      - name: Archive Build
+        run: |
+          tar cvzf whatgrep_macos_amd64.tar.gz -C ./target/release whatgrep
+      - name: Upload linux build artifact
+        uses: actions/upload-artifact@v1
+        with:
+          path: ./whatgrep_macos_amd64.tar.gz
+          name: macos
+  make_release:
+    name: make release
+    needs: [build_linux, build_macos]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download linux build artifact
+        uses: actions/download-artifact@v1
+        with:
+          name: linux
+      - name: Download macos build artifact
+        uses: actions/download-artifact@v1
+        with:
+          name: macos
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+      - name: Upload Linux Release Asset
+        id: upload-linux-amd64-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./linux/whatgrep_linux_amd64.tar.gz
+          asset_name: whatgrep_linux_amd64.tar.gz
+      - name: Upload MacOs Release Asset
+        id: upload-macos-amd64-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./macos/whatgrep_macos_amd64.tar.gz
+          asset_name: whatgrep_macos_amd64.tar.gz
