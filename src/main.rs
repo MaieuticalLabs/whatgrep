@@ -1,8 +1,3 @@
-extern crate structopt;
-extern crate whatlang;
-
-mod matcher;
-
 use std::error::Error;
 use std::fs::File;
 use std::io;
@@ -13,7 +8,8 @@ use std::path::PathBuf;
 use structopt::StructOpt;
 use whatlang::Lang;
 
-use matcher::Matcher;
+use whatgrep::match_lines;
+use whatgrep::matcher::Matcher;
 
 #[derive(Debug, StructOpt)]
 #[structopt(name = "Whatgrep", about = "Search lines for a given language")]
@@ -46,7 +42,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         _ => Box::new(File::open(opt.input)?),
     };
 
-    let buffer = BufReader::new(reader);
+    let mut buffer = BufReader::new(reader);
+    let mut content = String::new();
+    buffer.read_to_string(&mut content)?;
 
     let lang = Lang::from_code(opt.language).ok_or("Unable to parse language")?;
 
@@ -55,11 +53,9 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let matcher = Matcher::new(pool, lang, opt.threshold, opt.invert_match);
 
-    for line_res in buffer.lines() {
-        let line = line_res?;
-        if matcher.is_lang(&line) {
-            println!("{:#}", &line);
-        }
+    let matches: Vec<&str> = match_lines(&content, &matcher);
+    for m in &matches {
+        println!("{:#}", m);
     }
     Ok(())
 }
