@@ -21,7 +21,7 @@ impl Default for Matcher {
 impl Matcher {
     pub fn new(pool: Vec<Lang>, target: Lang, threshold: f64, invert_match: bool) -> Self {
         let detector: Detector = if pool.len() > 1 {
-            Detector::with_whitelist(pool)
+            Detector::with_allowlist(pool)
         } else {
             Detector::new()
         };
