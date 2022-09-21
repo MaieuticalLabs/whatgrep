@@ -1,5 +1,5 @@
+extern crate clap;
 extern crate rayon;
-extern crate structopt;
 extern crate whatlang;
 
 pub mod matcher;
